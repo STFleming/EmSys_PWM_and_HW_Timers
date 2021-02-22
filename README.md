@@ -11,10 +11,9 @@ There are two main ways to perform digital-to-analogue conversion:
 
 A resistor-ladder based Digital-to-Analogue Converter (DAC) uses a chain of resistors to produce a current that is weighted based on the significance of the bit that is fed into the DAC. In the last lecture, we explored how analogue to digital conversion is performed with the FlashADC circuit, you can think of the resistor-ladder network DAC as the inverse of this.
 
-A PWM-based DAC is different; unlike the previous approach where the output voltage can vary between a range of values, the output of a PWM can only be high or low. However, what changes is the amount of time the output spends high or low depending on the output of the circuit. Varying the rate at which the circuit is switched on and off has the effect of varying the average voltage, and therfor average power consumption, experienced at the output pin. Essentially a PWM generates a simulated analogue signal. PWM based approaches are frequently the most common seen in microcontrollers, and are typically used to control LEDs, motors, and other external actuators.  
+A PWM-based DAC is different; unlike the previous approach where the output voltage can vary between a range of values, the output of a PWM can only be high or low, i.e. it is a purely digital signal. However, what changes is the amount of time the output spends high or low. Varying the rate at which the circuit is switched on and off has the effect of varying the average voltage experienced at the output pin. Essentially a PWM generates a simulated analogue signal. PWM based approaches are frequently the most common seen in microcontrollers, and are typically used to control LEDs, motors, and other external actuators.  
 
-Let's look at this is a bit more detail:
-
+__Let's look at both of these approaches in a bit more detail:__
 
 ## R-2R resistor ladder network
 
@@ -220,12 +219,73 @@ On the ESP32 we have bucketloads of PWM modules:
 
 The motor control stuff is probably a little out of scope for this course, perhaps if we had physical labs we could do some experiments; for now I'll just focus on the LEDC PWM peripherals.
 
+Looking at the TRM we get the following diagram for the PWM hardware peripherals.
 
-__Timer Circuit block diagram__
+![](imgs/LED_PWM_Hardware.png)
 
-__MUX selection: HIGH or LOW__
+This thing looks quite intimidating but it's actually not too bad, let's break it down piece by piece. 
 
-__LED example with the PWM__
+![](imgs/LED_PWM_timer_highlight.png.svg)
+
+At the heart of this thing is the Timer circuit. This is used to count how many clock cycles to keep the signal high for, and then how many clock cycles to keep it low. These hardware timers are super accurate, they essentially count individual clock cycles, so their accuracy is one clock period.
+
+The actual clock that is counted is configurable, via the memory-mapped register bit ``LEDC_TICK_SEL_HSTIMERx``, where x is the particular timer that we are using. However, generally on the ESP32 it is the 80MHz ``APB_CLK``, giving our timer a highly precise potential accuracy of ``1/(80000000) = 12.5ns``, the time it takes light to travel 3.74 meters. 
+
+### Clock Divider
+
+Once the clock has been selected in the timer circuit the next stage is a potential clock divider. This is used to lower the frequency of the clock. Clock dividers are generally simple circuits that use something called a D-Type Flip-Flop. 
+
+![](imgs/DType.gif)
+
+A D-Type flip flop is a simple hardware primitive that has 4 ports:
+
+* A clock input (clk)
+* A D input
+* A Q output
+* A !Q output (the inverse of the Q output, sometimes a Q with a bar above it)
+
+How a D-Type flip-flop works is that whenever the clock input rises from 0 -> 1 the current value at D is copied over to Q. This means that by using the negated value at Q we can in essence make every period of the clock take twice as long as it should, dividing the clock by two. There are more complicated divider circuits that I'll leave interested readers explore [[here](https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqoQFMBaMMAKDASWZXGO7ABZ+PblUhsOIXELC9JCPrNosA7pMjSMhNdMUrtIFCiFT9Y1VwNHwYbibPXb6-Xb0WZfG+BR4oe-nC8ffyp3X3NPGx80H0iwg3xA+JjCUT1oxODEsQAlB0shfiirCD5KaBLoJBRKqChKlgBZEEzQ-kIdEQN69mwk8E19MAGqToQWAHtrSU7+Zlo6+EgyQgRCFCQRqewJr2na2bB5mEXl1fXa1iA)].
+
+Why would we want to divide our clock!? Wont this lower the accuracy of our timer?
+
+__yes__ -- but sometimes we have to because of the counter.
+
+### The Hardware Timer Counter
+
+The hardware counter essentially produces a binary number that increments every clock edge.
+
+![](imgs/counter.svg)
+
+The problem is that the counter has a fixed number of bits. In the case of the ESP32 PWM modules each counter has 20-bits. This means that at most it can count ``2^20 = 1048576`` clock cycles, which if we are using the 80MHz clock at it's maximum rate (i.e. no divider) then we can only time at most 13.11ms, which might not be long enough for some use cases. Hence we need the divider.  
+
+### The Comparators
+
+![](imgs/LED_PWM_Hardware_comparators.png.svg)
+
+The next portion of the PWM hardware peripheral is the comparators used to set the channel output. This portion is responsible for looking at the output of the timer module and comparing the value of the counter against software writable registers that control whether the signal should be latched high or low.
+
+![](imgs/pwm_output_channels.png)
+
+Above shows an example of how the timer value, the comparator thresholds, and the output signal are related. The black line represents the increasing timer value, which wraps around at the overflow point, as the ``lpoint`` and ``hpoint`` dotted lines represent the thresholds used to set the outputs.
+
+Let's walk through what is happening in the diagram above:
+
+1. Initially the timer value is at ``0`` and the output ``sig_out`` is __LOW__.
+2. The timer count increases and it reaches the first threshold value ``hpoint``, which triggers ``sig_out`` to become __HIGH__.
+3. The timer count continues to increase and it hits the second threshold ``lpoint``, with triggers `sig_out`` to become __LOW__.
+4. The timer count continues to increase until it hits it's overflow value, where it is then reset back to ``0``.
+5. return to 1
+
+If software wants to change the behaviour of the PWM, such as the duty cycle, then it can do so a few ways. It can write to memory-mapped hardware registers to either:
+
+* Change the overflow period of the timer
+* Change the divider value of the timer 
+* Change the ``lpoint`` threshold
+* Change the ``hpoint`` threshold
+
+## Playing about with the hardware
+
+Let's play with the PWM hardware to see if we can get it to do stuff without using too many Arduino API calls.
 
 __Configuring the PWM with Arduino code__
 
