@@ -176,6 +176,65 @@ Generally, when we want to generate an analogue signal from our microcontroller 
 
 ## Pulse Width Modulation (PWM)
 
-A PWM signal is a digital signal that simulates an analogue one by varying the amount of time that it is spent high and low. If the PWM signal spends a higher porportion of it's time is high, then the average voltage on that output is high, simulating a higher analogue voltage. If the PWM signal spends most of it's time off, then the average voltage is lower, simulating a lower analogue voltage.
+A PWM signal is a digital signal that simulates an analogue one by varying the amount of time that it is spent high and low. If the PWM signal spends a higher porportion of it's time is high, then the average voltage on that output is higher, simulating a higher analogue voltage. If the PWM signal spends most of it's time off, then the average voltage is lower, simulating a lower analogue voltage.
 
-In [[Lecture 3](https://github.com/STFleming/EmSys_GPIO_and_Abstraction_Costs)] we looked at the speed at which we could pulse GPIO pins from software and I briefly mentioned something called the duty-cycle, let's recap that here.
+In [[Lecture 3](https://github.com/STFleming/EmSys_GPIO_and_Abstraction_Costs)] we looked at the speed at which we could pulse GPIO pins from software and I briefly mentioned something called the duty-cycle. Let's recap that here:
+
+The duty-cycle refers to the percentage of a periodic square wave where the signal is spent logic HIGH. For instance, the image below has a duty-cycle of 50%.
+
+![](imgs/duty_cycle_50.svg)
+
+The signal is high half the time and low half the time. With respect to PWM if we have a 5V logic HIGH, then this signal has an average voltage for the period of the wave of 2.5V, giving us a simulated analogue voltage of 2.5V.
+
+![](imgs/duty_cycle_75.svg)
+
+If we increase the duty-cycle then we increase the simulated voltage of our signal. In the waveform above we have a duty-cycle of 75%, giving us a simulated analogue voltage of 3.5V.
+
+![](imgs/duty_cycle_25.svg)
+
+Decreasing the duty-cycle will have the opposite effect, decreasing the average voltage as for more of the time the signal is turned off. Thus reducing the simulated voltage. In the above example, the duty-cycle is reduced to 25% resulting in an average voltage of 1.25V. 
+
+### Generating PWM signals
+
+Often it is a requirement that PWM signals are very accurate, for instance, they might be driving motor controllers that need incredible high accuracy. To be able to adjust the simulated voltage with high precision requires, the ability to generate square-waves with high-accuracy at high-frequencies.
+
+As we saw in [[Lecture 3](https://github.com/STFleming/EmSys_GPIO_and_Abstraction_Costs)] it can be difficult to reliably generate precise waveforms from software. This is especially true if we want to generate accurate signals at high frequencies:
+
+* Function call and loop overheads can get in the way
+* There can be fluctuations in the output do to scheduling program instructions
+* Other tasks can intefere and block the output from changing
+* Our maximum frequency is limited to 6MHz (which might be okay for some applications, but not all, and this is all the CPU was allowed to do)
+
+__For this reason virtually _all_ microcontrollers provide specialised hardware peripherals purely for generating PWM signals on output pins.__
+
+* Custom hardware is not constrained by instruction scheduling in software. Software configures the hardware once and then the PWM circuit can generate the signals concurrently in the background.
+* Custom hardware cannot be effected by other inteferring tasks. If the currently running task is swapped to service another task the PWM hardware is uneffected.
+* Custom hardware can drive the pins at a much higher frequency as it has a much more direct connection to the I/O pins.
+
+On the ESP32 we have bucketloads of PWM modules:
+
+* 16 LED control PWMs (LEDC). Used for a lot more than just controlling LEDs.
+* 6 Motor Control PWMs (MCPWM). has extra hardware and signals for: fault detection, such as a motor drawing too much current; capture signals, directly read I/O to influence the motor control without involving the CPU at all. (This is incredibly cool if you need your motor to react to situations with very tight latency constraints.) 
+
+### Structure of a PWM hardware peripheral
+
+The motor control stuff is probably a little out of scope for this course, perhaps if we had physical labs we could do some experiments; for now I'll just focus on the LEDC PWM peripherals.
+
+
+__Timer Circuit block diagram__
+
+__MUX selection: HIGH or LOW__
+
+__LED example with the PWM__
+
+__Configuring the PWM with Arduino code__
+
+__Measuring the PWM (Nyquist)__
+
+
+### PWM as a communication channel
+
+__Servo motor control__ (Gumball machine?   yes?.... yes)
+
+## General Timer Hardware
+
