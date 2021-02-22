@@ -168,4 +168,14 @@ void loop() {
 }
 ```
 
+What is really cool about this, is that we can now generate arbitrary functions with a bit of C or Python, or Matlab, and generate arbitrary functions with out TinyPico. Without having to change any of our code, just the values that are loaded into the table.
 
+The DAC is a really neat feature that is built into the ESP32, however, this is not common for microcontrollers. As mentioned eariler, including a resistor ladder in the silicon is expensive in terms of the area it uses up. It is also quite low resolution (8-bits), and is quite power hungry when in use. For higher fidelity DACs, for say audio output, generally one would use an external DAC. Typically these are communicated with using a communication protocol such as SPI and have a much higher resolution (but also significant power cost) [[example here](https://www.mouser.co.uk/new/texas-instruments/ti-dac8568-dacs/?gclid=CjwKCAiAyc2BBhAaEiwA44-wW9Pm1TTkPOvvbcvsJGESbIGZRq1hzLzL86xahTTJkDE292uPMku9MxoC8dQQAvD_BwE)].
+
+Generally, when we want to generate an analogue signal from our microcontroller we will simulate an analogue output with something known as a pulse width modulation (PWM).
+
+## Pulse Width Modulation (PWM)
+
+A PWM signal is a digital signal that simulates an analogue one by varying the amount of time that it is spent high and low. If the PWM signal spends a higher porportion of it's time is high, then the average voltage on that output is high, simulating a higher analogue voltage. If the PWM signal spends most of it's time off, then the average voltage is lower, simulating a lower analogue voltage.
+
+In [[Lecture 3](https://github.com/STFleming/EmSys_GPIO_and_Abstraction_Costs)] we looked at the speed at which we could pulse GPIO pins from software and I briefly mentioned something called the duty-cycle, let's recap that here.
