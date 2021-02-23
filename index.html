@@ -16,8 +16,106 @@
 	<body>
 		<div class="reveal">
 			<div class="slides">
-                 
-				<section>Slide 2</section>
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                __DACs, PWMs, and Hardware Timers__                    
+                        </textarea>
+                   </section>
+
+                 <section data-autoplay data-background-video-loop data-background-video="media/zack_data_glove_cut.mp4" ></section>
+
+                 <section data-autoplay data-background-video-loop data-background-video="media/robot_hand_catching_cut.mp4" ></section>
+
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ## Outline                    
+                                * DAC: Analogue Approach 
+                                    * R-2R ladder
+                                    * Sine Wave Generator
+                                * sli.do questions
+                                * DAC: Digital Approach 
+                                    * PWM
+                                    * PWM control via registers 
+                                * sli.do questions
+                        </textarea>
+                   </section>
+
+<section data-transition="none" data-background-image="imgs/ESP32_Function_Block_Diagram_highlight_DAC_tight.svg"  data-background-size="contain"></section>
+
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ## Digital-to-Analogue conversion
+                                * Use a resistor ladder network
+                                * Use a Pulse Width Modulation (PWM) 
+                        </textarea>
+                   </section>
+
+                                 <section data-background-iframe="https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxEIBYQkFIaBTAWjDACgxD7PvLqeQKSvXppk8CXA5dBw8H1mi5o7pMnT62MWAValIwarXw2Ac3nUhvS3jxQoZwUMVObdkY9yW5XwbfuQbADu4BiE4MQoEVFgkQ4hYGEuieEoCOGBCUlpqemCeZn5ucUuhTlFINjYJYVVJXWlwdHNsVF68RWtghgxcWU9zZhtYrXVzdgIvVG1k+Oz7YEAMuPacRPT9gBmAIYANgDODDQOy0OVYmfrASA7B0dIS5XzYldXBreHx4EATuAyOvwZHgDGB1L8rBYXMD7KCJGxfu0Aed6NCjCZfgJoRDUTQ4eC5ND2ji6OjkSBocIUSD1OZKeT6HTWBtCpROBVWalnIVJnYUM4ed1pmwAPI0FC8gYIOJnCDsEINcocio-EBKvnUAXq+x0WGONX+JULBzbVVss6aga8+hMbRqSqwSAIOh4SgYUF8ngYZhgbAwsF-Kn0oP0ElSX7QiPWP1wzFRrHKQziYyFYjhLpM5qFDPpsDDDzmKguQvi9wncC5skZt5bPafB5sABKQcJURxDO4GQC0AQTVTLj75RTJRSyrYAHtKvRC+3SFAHXAwihiNhiJQENhcw955AyIR0ml7G1NGwgA" data-background-interactive></section>                                                                                                                    
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ![](imgs/tinypico_pinout_dac.jpg.svg)                    
+                        </textarea>
+                   </section>
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ![](imgs/duty_cycle_50.svg)                    
+                        </textarea>
+                   </section>
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ![](imgs/duty_cycle_75.svg)                    
+                        </textarea>
+                   </section>
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ![](imgs/duty_cycle_25.svg)                    
+                        </textarea>
+                   </section>
+
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ![](imgs/LED_PWM_Hardware.png)                    
+                        </textarea>
+                   </section>
+
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ![](imgs/LED_PWM_timer_highlight.png.svg)                    
+                        </textarea>
+                   </section>
+
+                                 <section data-background-iframe="https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWEDoBYEE4AcYFwMz5iqoBMqykylyApgLRhgBQuSpA7KSBgGwj5SVPlCjMASiE7cwpLFMjzZSqeDhTo7TaJgJmAdwG8lvKvmMheFSAaPyrUrpeu3pzx9xE2AsnZ78SeS8NPQB7cHcqVCYqJBh4SAwOXgReUjjVCHxmcKQHKJjqePgklLSMliA" data-background-interactive></section>                                                                                                                    
+                                 <section data-background-iframe="https://www.falstad.com/circuit/circuitjs.html?ctz=CQAgjCAMB0l3BWcMBMcUHYMGZIA4UA2ATmIxAUgoqoQFMBaMMAKDASWZXGO7ABZ+PbrTYcQuIWF4SEfGVUgsA7hMhSMhNVIUrtIFCiGT9S1VwNHwYbibPXb6-Xb0XpfG+BR4oe-nC8ffyp3X3NPGx80H0iwg3xA+JjCRT1oxODEpQAlB0shfiirCD5KaBLoJBRKqChKlgBZEEzQ-kIdEQN69mwk8E19MAGqToQWAHtrCU7+Zlo6+EgyQgRCFCQRqewJr2na2bB5mEXl1fXa1iA" data-background-interactive></section>                                                                                                                    
+
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ![](imgs/counter_tight.svg)                    
+                        </textarea>
+                   </section>
+
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ![](imgs/LED_PWM_Hardware_comparators.png.svg)                    
+                        </textarea>
+                   </section>
+
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ![](imgs/pwm_output_channels.png)                    
+                        </textarea>
+                   </section>
+
+
+                   <section data-transition="none" data-markdown>
+                        <textarea data-template>
+                                ## Conclusion 
+                                * Resistor-ladder networks are expensive 
+                                * Sine Wave generator (table lookup optimisation)
+                                * Simulate an analogue signal with a PWM
+                                * Hardware timers -- memory-mapped configuration
+                        </textarea>
+                   </section>
+
 			</div>
 		</div>
 
