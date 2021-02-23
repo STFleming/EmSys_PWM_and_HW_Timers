@@ -25,8 +25,8 @@ void loop() {
        for(int i=0; i<255; i++) {
            *LEDC_HSCH0_DUTY_REG = (i << 4);
            *LEDC_HSCH0_CONF1_REG = (1 << 31);
-           //delayMicroseconds(100);
-           delay(3);
+           delayMicroseconds(100);
+           //delay(3);
        }
 
 }
