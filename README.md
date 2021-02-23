@@ -19,11 +19,13 @@ __Let's look at both of these approaches in a bit more detail:__
 
 ![](imgs/2r-r-ladder.gif)
 
-A resistor-ladder based DAC will produce a varying output voltage at discrete intervals between 0V and the supply. Essentially how this works is that 
+A resistor-ladder based DAC will produce a varying output voltage at discrete intervals between 0V and the supply. Essentially how this works is that the resistor network is configured so that each binary bit contrbutes a current that is an appropriate power of 2 for it's position. Look at the gif below where I toggle the bits from  most significant bits (MSB) down to the least significant bit (LSB). 
 
-__TODO: think a nice way to explain this!__
+![](imgs/current_msb_2_lsb.gif)
 
 The most siginificant bits (MSBs) will contibute the most current, as the least significant bits will contribute the least (LSBs). They are also carefully weighted by the R-2R ladder network so that each bit will increase the current contribution by a power of 2.  
+
+In the case above, the MSB is bit 3 which adds 160uA; the next down is bit 2, which adds 80uA; then bit 1 which adds 40uA; finally, bit 0 which adds 20uA. Each bit adds current proportional to their contribution to the numerical value. 
 
 There are however, problems with this approach. Putting resistors in silicon is seriously expensive in both power and area. Resistors tend to dissapate lots of power as they resist current, and manufacturing them into the silicon requires special techniques, with additional manufacturing steps, that uses up lots of silicon resources. For these reasons, 2R-R ladder based DACs in microcontrollers tend to either be:
 
