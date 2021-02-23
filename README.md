@@ -287,16 +287,147 @@ If software wants to change the behaviour of the PWM, such as the duty cycle, th
 
 Let's play with the PWM hardware to see if we can get it to do stuff without using too many Arduino API calls.
 
+I will however use the following Arduino setup code to connect a hardware PWM channel to a GPIO pin. We could do this with low-level register reads and writes, but we would get bogged down in the details, so for simplicity lets leave the setup Ardunio API based.
+
+```C
+const unsigned int pwmPin = 15;
+const unsigned int freq = 5000;   
+const unsigned int pwmChannel = 0;
+const unsigned int resolution = 8;
+
+void setup() {
+  ledcSetup(pwmChannel, freq, resolution);
+  ledcAttachPin(pwmPin, pwmChannel);
+}
+
+void loop() {
+
+}
+```
+
+This code is doing the following:
+
+* Sets up the PWM Channel 0 ``pwmChannel`` timer so that it has a resolution of 8-bits. This means that the we are telling the timer in the PWM hardware only to use the bottom 8-bits of its counter, remember that the maximum is 20 bits. The counter will count up to 256 and then wrap around.
+* Sets the frequency of the timer to be 5KHz ``freq = 5000;``, this sets up the clock-divider so that the counter counts at this frequency.
+* Attaches the PWM Channel 0 to GPIO pin 15. This configures the internal routing logic in the I/O to connect the output of the PWM to pin 15.
+
+Now let's connect a logic analyser to GPIO pin 15 and see what we get at the output!
+
+![](imgs/pwm_nada.png)
+
+Not a lot. The reason is because we have not set up the thresholds ``lpoint`` and ``hpoint`` that determine at what timer counter value we should set the output high or not. By default the ``lpoint`` and ``hpoint`` are set to 0. If we look at Figure 88 in the TRM (or the cutout above) we can see that this will mean that ``sig_out`` is always low.
+
+What we are going to do now, is change the position of ``lpoint``. If we increase it a bit then the signal will be on a little bit longer. Remember that we have configured out timer to be 8-bits, this means that it is counting up to 256, so if we set the ``lpoint`` to 128 then we will have a 50% duty-cycle as we will be switching halfway through the timer's counting.
+
+To set the registers for the ``lpoint`` threshold we could use the Arduino function ``ledcWrite(pwmChannel, value);`` where value is the position in the 8-bit number that we want to set the threshold at. However, let's try and use the underlying hardware registers instead.
+
+![](imgs/duty_cycle_address.png)
+
+The main register for setting the ``lpoint`` of Channel 0 is ``LEDC_HSHC0_DUTY_REG`` which has the memory-mapped address: ``0x3FF59008``
+
+Looking at the description for this register we get the following:
+
 ![](imgs/pwm_duty_reg.png)
 
-__Configuring the PWM with Arduino code__
+We can see that to set the ``lpoint`` (``LEDC_LPOINT_HSCH0``) we need to write to the ``LEDC_DUTY_HSCH0`` portion of this register, specifically bits ``24 - 4``. The bottom 4 bits are for fine adjustment of the PWM signal, which we wont worry about here. So, to change the LPOINT we can add a write to this register in our code above within the body of ``loop()``.
 
-__Measuring the PWM (Nyquist)__
+```C
+const unsigned int pwmPin = 15;
+const unsigned int freq = 5000;   
+const unsigned int pwmChannel = 0;
+const unsigned int resolution = 8;
 
+void setup() {
+  ledcSetup(pwmChannel, freq, resolution);
+  ledcAttachPin(pwmPin, pwmChannel);
+}
 
-### PWM as a communication channel
+unsigned int * LEDC_HSCH0_DUTY_REG = (unsigned int *)(0x3FF59008);
 
-__Servo motor control__ (Gumball machine?   yes?.... yes)
+void loop() {
+        for(int i=0; i<256; i++) {
+                *LEDC_HSCH0_DUTY_REG = (i << 4); 
 
-## General Timer Hardware
+                delayMicroseconds(100);
+        }
+}
+```
+
+This code will every microsecond increase the value of the ``lpoint`` with the line ``*LEDC_HSCH0_DUTY_REG = (i << 4);``. Notice the shift to the left 4 places as we are using bits ``24 - 4``. 
+
+However, there are a few more registers that we need to set before we can get this to work. 
+
+* We need to set a bit to enable the output
+* We need to set a start bit to load in the change we made to the ``LEDC_HSHC0_DUTY_REG`` above
+
+To do this we need to configure two control registers of the PWM hardware: ``LEDC_HSCH0_CONF0_REG`` and ``LEDC_HSHC0_CONF1_REG``. 
+
+![](imgs/Conf0.png)
+
+To enable the output we must set bit 2 of ``LEDC_HSCH0_CONF0_REG``, we can do this once outside the loop. 
+
+```C
+const unsigned int pwmPin = 15;
+const unsigned int freq = 5000;   
+const unsigned int pwmChannel = 0;
+const unsigned int resolution = 8;
+
+void setup() {
+  ledcSetup(pwmChannel, freq, resolution);
+  ledcAttachPin(pwmPin, pwmChannel);
+}
+
+unsigned int * LEDC_HSCH0_DUTY_REG = (unsigned int *)(0x3FF59008);
+unsigned int * LEDC_HSCH0_CONF0_REG = (unsigned int *)(0x3FF59000);
+
+void loop() {
+        *LEDC_HSCH0_CONF0_REG = (1 << 2);
+        for(int i=0; i<256; i++) {
+                *LEDC_HSCH0_DUTY_REG = (i << 4); 
+
+                delayMicroseconds(100);
+        }
+}
+```
+
+Notice the ``(1 << 2)`` to shift the binary value ``...00001`` by two places to the left to get ``...00100`` to set just bit 2.
+
+![](imgs/Conf1.png)
+
+Finally, every time we change the configuration of the PWM we need to set an update bit that applies the changes we have made, in this case this is bit 31 of of register ``LEDC_HSCH0_CONF1_REG``
+
+```C
+const unsigned int pwmPin = 15;
+const unsigned int freq = 5000;   
+const unsigned int pwmChannel = 0;
+const unsigned int resolution = 8;
+
+void setup() {
+  ledcSetup(pwmChannel, freq, resolution);
+  ledcAttachPin(pwmPin, pwmChannel);
+}
+
+unsigned int * LEDC_HSCH0_DUTY_REG = (unsigned int *)(0x3FF59008);
+unsigned int * LEDC_HSCH0_CONF0_REG = (unsigned int *)(0x3FF59000);
+unsigned int * LEDC_HSCH0_CONF1_REG = (unsigned int *)(0x3FF5900C);
+
+void loop() {
+        *LEDC_HSCH0_CONF0_REG = (1 << 2);
+        for(int i=0; i<256; i++) {
+                *LEDC_HSCH0_DUTY_REG = (i << 4); 
+                *LEDC_HSCH0_CONF1_REG = (1 << 31); 
+                delayMicroseconds(100);
+        }
+}
+```
+
+Using our logic analyser we can see the following output at pin 15.
+
+![](imgs/pwm_output.png)
+
+Which is what we expect, we can see the length of time the signal is spent high increasing as we increase the ``lpoint`` threshold by periodically writing to the appropriate hardware registers.
+
+Then finally to demonstrate that this is really simulating an analogue voltage, we can hook up an LED to pin 15 and watch it fade!
+
+![](imgs/led_fade.gif)
 
