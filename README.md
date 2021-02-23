@@ -287,6 +287,8 @@ If software wants to change the behaviour of the PWM, such as the duty cycle, th
 
 Let's play with the PWM hardware to see if we can get it to do stuff without using too many Arduino API calls.
 
+![](imgs/pwm_duty_reg.png)
+
 __Configuring the PWM with Arduino code__
 
 __Measuring the PWM (Nyquist)__
