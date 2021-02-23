@@ -1,6 +1,6 @@
 # Pulse Width Modulation (PWM) and Hardware Timers 
 
-In this lecture we are going to look a bit deeper at some of the hardware peripherals within our ESP32 devices. In particular, we will explore the Pulse Width Modulation (PWM) hardware peripherals and the hardware timer modules.
+In this lecture we are going to look a bit deeper at some of the hardware peripherals within our ESP32 devices. In particular, we will explore the Digital-to-Analogue converter and the Pulse Width Modulation (PWM) hardware peripherals.
 
 
 # Digital-to-Analogue conversion
@@ -105,7 +105,7 @@ void loop() {
 }
 ```
 
-In the code above we are using turning the value signal into an angle (in radians) using the variable ``float conversionFactor``. Since we know we have 200 possible values, we have worked out what each unit of the ``2*PI`` circle we want to give each value. __TODO: better explanation here__. 
+In the code above we are turning the value signal into an angle (in radians) using the variable ``float conversionFactor``. Since we know we have 200 possible values, we have worked out what each proportion of the ``2*PI`` circle we want to give it. 
 The next thing that we need to do is shift the signals up as our DAC will not understand negative values and ``sin`` will produce negative values. ``sin(value * conversionFactor)`` will produce a value between ``0-1`` so we multiply this by ``100`` and then add ``100`` to move it into the middle of the range. 
 
 This produces the following output on the oscilliscope:
